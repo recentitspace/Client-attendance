@@ -3,6 +3,7 @@ import html2canvas from 'html2canvas';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import DashboardLayout from './Dashboard/DashboardLayout';
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const ConfigManager = () => {
   const [activeForm, setActiveForm] = useState('');
@@ -23,8 +24,8 @@ const ConfigManager = () => {
     const fetchData = async () => {
       try {
         const [qrRes, wifiRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/get-all-qr-codes'),
-          axios.get('http://localhost:5000/api/get-all-wifi-configs')
+          axios.get(`${baseURL}api/get-all-qr-codes`),
+          axios.get(`${baseURL}api/get-all-wifi-configs`)
         ]);
 
         const qrEntries = qrRes.data.qrCodes.map(qr => ({
@@ -49,7 +50,7 @@ const ConfigManager = () => {
 
   const generateQRCode = async (e) => {
     e.preventDefault();
-    const res = await axios.post('http://localhost:5000/api/generate-qr', { companyName });
+    const res = await axios.post(`${baseURL}api/generate-qr`, { companyName });
     setQrCodeImage(res.data.qrCodeImage);
     await Swal.fire({
       title: 'QR Code Created!',
@@ -63,7 +64,7 @@ const ConfigManager = () => {
 
   const addWiFiConfig = async (e) => {
     e.preventDefault();
-    await axios.post('http://localhost:5000/api/add-wifi-config', { ssid });
+    await axios.post(`${baseURL}api/add-wifi-config`, { ssid });
     setSsid('');
     await Swal.fire({
       title: 'Copied!',

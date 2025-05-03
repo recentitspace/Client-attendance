@@ -5,6 +5,7 @@ import TimetableForm from './TimeTableForm';
 import moment from 'moment-timezone';
 import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/solid';
 import { useNavigate } from "react-router-dom";
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const TimetableApp = () => {
   const [showForm, setShowForm] = useState(false);
@@ -25,7 +26,7 @@ const TimetableApp = () => {
   const fetchTimetables = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/time-tables/all', {
+      const response = await axios.get(`${baseURL}api/time-tables/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTimetables(response.data);
@@ -46,7 +47,7 @@ const TimetableApp = () => {
   const handleAddTimetable = async (newTimetable) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:5000/api/time-tables/create', newTimetable, {
+      const response = await axios.post(`${baseURL}api/time-tables/create`, newTimetable, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTimetables([...timetables, response.data]);
@@ -62,7 +63,7 @@ const TimetableApp = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://localhost:5000/api/time-tables/update/${updatedTimetable._id}`,
+        `${baseURL}api/time-tables/update/${updatedTimetable._id}`,
         updatedTimetable,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -87,7 +88,7 @@ const TimetableApp = () => {
   const handleDeleteTimetable = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/time-tables/delete/${timetableToDelete}`, {
+      await axios.delete(`${baseURL}api/time-tables/delete/${timetableToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTimetables(timetables.filter((t) => t._id !== timetableToDelete));

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import DashboardLayout from "../Dashboard/DashboardLayout";
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const TimetableDetails = () => {
   const { id } = useParams();
@@ -11,7 +12,7 @@ const TimetableDetails = () => {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/time-tables/${id}/employees`);
+        const res = await axios.get(`${baseURL}api/time-tables/${id}/employees`);
         setEmployees(res.data.data || []);
       } catch (error) {
         console.error("Error fetching employees for timetable:", error);

@@ -11,6 +11,7 @@ import {
   ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import axios from 'axios';
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const DashboardLayout = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -20,7 +21,7 @@ const DashboardLayout = ({ children }) => {
     const checkAdmin = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/api/auth/me', {
+        const response = await axios.get(`${baseURL}api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(response.data);

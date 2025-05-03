@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { format } from 'date-fns';
 import DashboardLayout from '../Dashboard/DashboardLayout';
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const LeaveRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -17,7 +18,7 @@ const LeaveRequests = () => {
   const fetchLeaveRequests = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await axios.get('http://localhost:5000/api/leave-requests/all', {
+      const res = await axios.get(`${baseURL}api/leave-requests/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -47,7 +48,7 @@ const LeaveRequests = () => {
     const token = localStorage.getItem('token');
     try {
       await axios.put(
-        `http://localhost:5000/api/leave-requests/update/${id}`,
+        `${baseURL}api/leave-requests/update/${id}`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -128,7 +129,7 @@ const LeaveRequests = () => {
                         <img
                           src={
                             record.employeeId?.image
-                              ? `http://localhost:5000/${record.employeeId.image}`
+                              ? `${baseURL}${record.employeeId.image}`
                               : `https://ui-avatars.com/api/?name=${record.employeeId?.username || 'User'}`
                           }
                           className="w-10 h-10 rounded-full object-cover"

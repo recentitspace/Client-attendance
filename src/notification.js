@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Bell } from 'lucide-react';
 import { format, isValid } from 'date-fns';
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const NotificationsDropdown = () => {
   const [open, setOpen] = useState(false);
@@ -10,7 +11,7 @@ const NotificationsDropdown = () => {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/leave-requests/pending', {
+      const res = await axios.get(`${baseURL}api/leave-requests/pending`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNotifications(res.data);
@@ -22,7 +23,7 @@ const NotificationsDropdown = () => {
   const markAsRead = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.patch(`http://localhost:5000/api/leave-requests/${id}/mark-read`, {}, {
+      await axios.patch(`${baseURL}api/leave-requests/${id}/mark-read`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNotifications((prev) =>

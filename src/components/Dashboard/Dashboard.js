@@ -23,6 +23,7 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const Dashboard = () => {
   const [analytics, setAnalytics] = useState({});
@@ -38,7 +39,7 @@ const Dashboard = () => {
 
   const fetchAnalytics = async () => {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:5000/api/attendance/overall', {
+    const res = await axios.get(`${baseURL}api/attendance/overall`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setAnalytics(res.data.data);
@@ -46,7 +47,7 @@ const Dashboard = () => {
 
   const fetchWeeklyTrend = async () => {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:5000/api/attendance/weekly', {
+    const res = await axios.get(`${baseURL}api/attendance/weekly`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setWeeklyTrend(res.data.data);
@@ -58,7 +59,7 @@ const Dashboard = () => {
     targetDate.setDate(targetDate.getDate() - currentPage);
     const selectedDateStr = targetDate.toISOString().split('T')[0];
     const res = await axios.get(
-      `http://localhost:5000/api/attendance/date?date=${selectedDateStr}`,
+      `${baseURL}api/attendance/date?date=${selectedDateStr}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     if (res.data.success) {
@@ -158,7 +159,7 @@ const Dashboard = () => {
                       <img
                         src={
                           emp.image
-                            ? `http://localhost:5000/${emp.image}`
+                            ? `${baseURL}${emp.image}`
                             : `https://ui-avatars.com/api/?name=${emp.username || 'Unknown'}`
                         }
                         alt="avatar"

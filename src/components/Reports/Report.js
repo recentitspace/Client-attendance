@@ -6,6 +6,8 @@ import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import DashboardLayout from '../Dashboard/DashboardLayout';
 import * as XLSX from 'xlsx';
+const baseURL = process.env.REACT_APP_API_BASE;
+
 const ReportsPage = () => {
   const [summary, setSummary] = useState(null);
   const [records, setRecords] = useState([]);
@@ -17,7 +19,7 @@ const ReportsPage = () => {
   const fetchSummary = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/reports/summary', {
+      const res = await axios.get(`${baseURL}api/reports/summary`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSummary(res.data);
@@ -29,7 +31,7 @@ const ReportsPage = () => {
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/employees', {
+      const res = await axios.get(`${baseURL}api/employees`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setEmployees(res.data);
@@ -44,7 +46,7 @@ const ReportsPage = () => {
     try {
       const token = localStorage.getItem('token');
       const res = await axios.get(
-        `http://localhost:5000/api/reports/range/${selectedEmployee}?from=${dateRange.from}&to=${dateRange.to}`,
+        `${baseURL}api/reports/range/${selectedEmployee}?from=${dateRange.from}&to=${dateRange.to}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setRecords(res.data.data);

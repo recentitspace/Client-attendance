@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const SignUp = () => {
   const [name, setName] = useState('');
@@ -24,7 +25,7 @@ const SignUp = () => {
         formData.append('image', image);
       }
   
-      await axios.post('http://localhost:5000/api/auth/register-admin', formData, {
+      await axios.post(`${baseURL}api/auth/register-admin`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

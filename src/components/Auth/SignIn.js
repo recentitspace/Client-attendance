@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
@@ -11,7 +12,7 @@ const SignIn = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login-admin', { email, password });
+      const response = await axios.post(`${baseURL}api/auth/login-admin`, { email, password });
       localStorage.setItem('token', response.data.token);
       navigate('/dashboard');
     } catch (error) {

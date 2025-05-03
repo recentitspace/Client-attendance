@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../Dashboard/DashboardLayout';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+const baseURL = process.env.REACT_APP_API_BASE;
 
 function AdminAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState([]);
@@ -17,7 +18,7 @@ function AdminAnnouncementsPage() {
   const fetchAnnouncements = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/announcements/all', {
+      const response = await axios.get(`${baseURL}/api/announcements/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAnnouncements(response.data);
@@ -46,7 +47,7 @@ function AdminAnnouncementsPage() {
   const createAnnouncement = async (announcement) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/announcements/create', announcement, {
+      await axios.post(`${baseURL}/api/announcements/create`, announcement, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -60,7 +61,7 @@ function AdminAnnouncementsPage() {
   const editAnnouncement = async (id, announcement) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/announcements/edit/${id}`, announcement, {
+      await axios.put(`${baseURL}/api/announcements/edit/${id}`, announcement, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -91,7 +92,7 @@ function AdminAnnouncementsPage() {
     if (confirm.isConfirmed) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:5000/api/announcements/delete/${id}`, {
+        await axios.delete(`${baseURL}/api/announcements/delete/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

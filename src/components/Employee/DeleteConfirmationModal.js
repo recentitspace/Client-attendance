@@ -1,11 +1,12 @@
 import React from 'react';
 import axios from 'axios';
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const DeleteConfirmationModal = ({ employee, onClose, onConfirm }) => {
   const handleDelete = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/employees/delete/${employee._id}`, {
+      await axios.delete(`${baseURL}api/employees/delete/${employee._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

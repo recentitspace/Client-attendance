@@ -7,6 +7,7 @@ import autoTable from 'jspdf-autotable';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const AttendanceManagement = () => {
   const [attendance, setAttendance] = useState([]);
@@ -25,7 +26,7 @@ const AttendanceManagement = () => {
 
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/attendance/date?date=${selectedDateStr}`,
+        `${baseURL}api/attendance/date?date=${selectedDateStr}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -221,7 +222,7 @@ const AttendanceManagement = () => {
                       <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                         <td className="flex items-center gap-3 px-6 py-4 whitespace-nowrap">
                           <img
-                            src={emp.image ? `http://localhost:5000/${emp.image}` : `https://ui-avatars.com/api/?name=${emp.username || 'Unknown'}`}
+                            src={emp.image ? `${baseURL}${emp.image}` : `https://ui-avatars.com/api/?name=${emp.username || 'Unknown'}`}
                             className="w-10 h-10 rounded-full object-cover"
                             alt="avatar"
                           />

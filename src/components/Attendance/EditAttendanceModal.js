@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const EditAttendanceModal = ({ isOpen, onClose, attendanceData, onAttendanceUpdated }) => {
   const [checkOutTime, setCheckOutTime] = useState(attendanceData.checkOutTime || '');
@@ -11,7 +12,7 @@ const EditAttendanceModal = ({ isOpen, onClose, attendanceData, onAttendanceUpda
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/attendance/edit/${attendanceData._id}`, {
+      await axios.put(`${baseURL}api/attendance/edit/${attendanceData._id}`, {
         checkOutTime,
         status, // Include the status in the update
       }, {

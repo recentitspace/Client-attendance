@@ -10,6 +10,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const EmployeeManagement = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -41,7 +42,7 @@ const EmployeeManagement = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/employees', {
+      const response = await axios.get(`${baseURL}api/employees`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setEmployees(response.data);
@@ -96,7 +97,7 @@ const EmployeeManagement = () => {
   const handleConfirmDelete = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/employees/delete/${selectedEmployee._id}`, {
+      await axios.delete(`${baseURL}api/employees/delete/${selectedEmployee._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setEmployees(employees.filter(emp => emp._id !== selectedEmployee._id));
@@ -290,7 +291,7 @@ const EmployeeManagement = () => {
                     <td className="py-3 px-4">
                       {employee.image ? (
                         <img
-                          src={`http://localhost:5000/${employee.image}`}
+                          src={`${baseURL}${employee.image}`}
                           alt={employee.username}
                           className="w-12 h-12 rounded-full object-cover"
                         />

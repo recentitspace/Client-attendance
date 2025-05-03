@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+const baseURL = process.env.REACT_APP_API_BASE;
 
 const AddEmployeeModal = ({ onClose, onAdd }) => {
   const [employeeData, setEmployeeData] = useState({
@@ -22,7 +23,7 @@ const AddEmployeeModal = ({ onClose, onAdd }) => {
     const fetchTimetables = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/api/time-tables/all', {
+        const response = await axios.get(`${baseURL}api/time-tables/all`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTimetables(response.data);
@@ -54,7 +55,7 @@ const AddEmployeeModal = ({ onClose, onAdd }) => {
       });
 
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:5000/api/employees/add', formData, {
+      const response = await axios.post(`${baseURL}api/employees/add`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
