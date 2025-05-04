@@ -9,7 +9,7 @@ const ProfileDropdown = () => {
   
     useEffect(() => {
       const token = localStorage.getItem('token');
-      axios.get('/api/auth/me', {
+      axios.get(`${baseURL}api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => setAdmin(res.data));
     }, []);
