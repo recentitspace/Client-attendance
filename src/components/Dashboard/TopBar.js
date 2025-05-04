@@ -7,6 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import NotificationDropdown from "../../notification";
+import ProfileDropdown from "../../profile.js";
 const Topbar = () => {
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("theme") === "dark"
@@ -62,12 +63,7 @@ const Topbar = () => {
 
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-50">
-              <button
-                onClick={() => navigate("/profile")}
-                className="w-full px-4 py-2 text-left text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                My Profile
-              </button>
+              <ProfileDropdown/>
               <button
                 onClick={handleLogout}
                 className="w-full px-4 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-800"
