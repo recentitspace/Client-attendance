@@ -7,7 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import NotificationDropdown from "../../notification";
-import ProfileDropdown from "../../profile.js";
+import ProfileDropdown from "./profile";
 const Topbar = () => {
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("theme") === "dark"
