@@ -33,15 +33,16 @@
     "react-scripts": "5.0.1",
     "recharts": "^2.15.2",
     "sweetalert2": "^11.19.1",
+    "tailwind-scrollbar": "^3.0.0",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "cross-env CI=false react-scripts build",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "postinstall": "npm install tailwind-scrollbar --save-dev"
+    "deploy": "npm ci --legacy-peer-deps && npm run build"
   },
   "eslintConfig": {
     "extends": [
@@ -67,5 +68,8 @@
     "cross-env": "^7.0.3",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.11"
+  },
+  "resolutions": {
+    "tailwind-scrollbar": "^3.0.0"
   }
 }
