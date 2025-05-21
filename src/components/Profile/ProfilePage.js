@@ -21,6 +21,19 @@ const ProfilePage = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [activeTab, setActiveTab] = useState('profile');
   
+  // New state for admin creation
+  const [newAdmin, setNewAdmin] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [adminImage, setAdminImage] = useState(null);
+  const [adminImagePreview, setAdminImagePreview] = useState(null);
+  const [adminError, setAdminError] = useState('');
+  const [adminSuccess, setAdminSuccess] = useState('');
+  const [adminLoading, setAdminLoading] = useState(false);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,6 +71,23 @@ const ProfilePage = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+  
+  const handleAdminInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewAdmin({ ...newAdmin, [name]: value });
+  };
+  
+  const handleAdminImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAdminImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAdminImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleImageChange = (e) => {
@@ -148,6 +178,61 @@ const ProfilePage = () => {
       setError(error.response?.data?.message || 'Failed to update password');
     }
   };
+  
+  // New function to handle admin creation
+  const handleCreateAdmin = async (e) => {
+    e.preventDefault();
+    setAdminError('');
+    setAdminSuccess('');
+    setAdminLoading(true);
+    
+    if (newAdmin.password !== newAdmin.confirmPassword) {
+      setAdminError('Passwords do not match');
+      setAdminLoading(false);
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const formDataObj = new FormData();
+      
+      formDataObj.append('username', newAdmin.username);
+      formDataObj.append('email', newAdmin.email);
+      formDataObj.append('password', newAdmin.password);
+      formDataObj.append('role', 'admin');
+      
+      if (adminImage) {
+        formDataObj.append('image', adminImage);
+      }
+      
+      await axios.post(`${baseURL}api/auth/register-admin`, formDataObj, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      setAdminSuccess('Admin created successfully');
+      setNewAdmin({
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+      });
+      setAdminImage(null);
+      setAdminImagePreview(null);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setAdminSuccess('');
+      }, 3000);
+    } catch (error) {
+      console.error('Error creating admin:', error);
+      setAdminError(error.response?.data?.message || 'Failed to create admin');
+    } finally {
+      setAdminLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -161,48 +246,78 @@ const ProfilePage = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">My Profile</h1>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Account Settings</h1>
         
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
-            {error}
-          </div>
-        )}
-        
-        {successMessage && (
-          <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
-            {successMessage}
-          </div>
-        )}
-        
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-          <div className="flex border-b border-gray-200 dark:border-gray-700">
-            <button
-              className={`px-6 py-3 font-medium ${
-                activeTab === 'profile'
-                  ? 'text-blue-600 border-b-2 border-blue-600 dark:text-blue-400 dark:border-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-              onClick={() => setActiveTab('profile')}
-            >
-              Profile Information
-            </button>
-            <button
-              className={`px-6 py-3 font-medium ${
-                activeTab === 'password'
-                  ? 'text-blue-600 border-b-2 border-blue-600 dark:text-blue-400 dark:border-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-              onClick={() => setActiveTab('password')}
-            >
-              Change Password
-            </button>
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="flex">
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`px-6 py-4 text-sm font-medium ${
+                  activeTab === 'profile'
+                    ? 'text-blue-600 border-b-2 border-blue-500'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                Profile
+              </button>
+              <button
+                onClick={() => setActiveTab('password')}
+                className={`px-6 py-4 text-sm font-medium ${
+                  activeTab === 'password'
+                    ? 'text-blue-600 border-b-2 border-blue-500'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                Password
+              </button>
+              <button
+                onClick={() => setActiveTab('create-admin')}
+                className={`px-6 py-4 text-sm font-medium ${
+                  activeTab === 'create-admin'
+                    ? 'text-blue-600 border-b-2 border-blue-500'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                Create Admin
+              </button>
+            </nav>
           </div>
           
           <div className="p-6">
             {activeTab === 'profile' ? (
               <form onSubmit={handleProfileUpdate} className="space-y-6">
+                {successMessage && (
+                  <div className="rounded-md bg-green-50 dark:bg-green-900/30 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-green-800 dark:text-green-200">{successMessage}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {error && (
+                  <div className="rounded-md bg-red-50 dark:bg-red-900/30 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex flex-col md:flex-row gap-6">
                   <div className="md:w-1/3 flex flex-col items-center">
                     <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-700 mb-4">
@@ -216,7 +331,7 @@ const ProfilePage = () => {
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <label className="cursor-pointer px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                    <label className="cursor-pointer px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
                       Change Photo
                       <input
                         type="file"
@@ -230,7 +345,7 @@ const ProfilePage = () => {
                   <div className="md:w-2/3 space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Username
+                        Full Name
                       </label>
                       <input
                         type="text"
@@ -282,57 +397,214 @@ const ProfilePage = () => {
                   </div>
                 </div>
               </form>
-            ) : (
+            ) : activeTab === 'password' ? (
               <form onSubmit={handlePasswordUpdate} className="space-y-4 max-w-md mx-auto">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    name="currentPassword"
-                    value={formData.currentPassword}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    required
-                  />
-                </div>
+                {successMessage && (
+                  <div className="rounded-md bg-green-50 dark:bg-green-900/30 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-green-800 dark:text-green-200">{successMessage}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    name="newPassword"
-                    value={formData.newPassword}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    required
-                  />
-                </div>
+                {error && (
+                  <div className="rounded-md bg-red-50 dark:bg-red-900/30 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    required
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Current Password
+                    </label>
+                    <input
+                      type="password"
+                      name="currentPassword"
+                      value={formData.currentPassword}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      name="newPassword"
+                      value={formData.newPassword}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="pt-4">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                    >
+                      Update Password
+                    </button>
+                  </div>
                 </div>
+              </form>
+            ) : (
+              <form onSubmit={handleCreateAdmin} className="space-y-6">
+                {adminSuccess && (
+                  <div className="rounded-md bg-green-50 dark:bg-green-900/30 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-green-800 dark:text-green-200">{adminSuccess}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
-                <div className="pt-4">
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                  >
-                    Update Password
-                  </button>
+                {adminError && (
+                  <div className="rounded-md bg-red-50 dark:bg-red-900/30 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-red-800 dark:text-red-200">{adminError}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex flex-col md:flex-row gap-6">
+                  <div className="md:w-1/3 flex flex-col items-center">
+                    <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-700 mb-4">
+                      <img
+                        src={
+                          adminImagePreview || 
+                          (user?.image ? `${baseURL}${user.image}` : 
+                          `https://ui-avatars.com/api/?name=${user?.username || 'User'}&background=209ACF&color=fff&size=128`)
+                        }
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <label className="cursor-pointer px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                      Change Photo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleAdminImageChange}
+                      />
+                    </label>
+                  </div>
+                  
+                  <div className="md:w-2/3 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Username
+                      </label>
+                      <input
+                        type="text"
+                        name="username"
+                        value={newAdmin.username}
+                        onChange={handleAdminInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={newAdmin.email}
+                        onChange={handleAdminInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        name="password"
+                        value={newAdmin.password}
+                        onChange={handleAdminInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Confirm Password
+                      </label>
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        value={newAdmin.confirmPassword}
+                        onChange={handleAdminInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="pt-4">
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                        disabled={adminLoading}
+                      >
+                        {adminLoading ? "Creating..." : "Create Admin"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </form>
             )}
@@ -344,3 +616,4 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
+

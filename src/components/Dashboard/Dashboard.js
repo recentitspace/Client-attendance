@@ -92,31 +92,76 @@ const Dashboard = () => {
   }, [currentPage]);
 
   const fetchAnalytics = async () => {
-    const token = localStorage.getItem('token');
-    const res = await axios.get(`${baseURL}api/attendance/overall`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setAnalytics(res.data.data);
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${baseURL}api/attendance/overall`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      // The API returns data directly in the response body, not in a nested data property
+      const data = res.data || {};
+      
+      console.log('Analytics data received:', data);
+      
+      // Create analytics object with default values
+      setAnalytics({
+        present: data.present || 0,
+        absent: data.absent || 0,
+        onLeave: data.onLeave || 0,
+        late: data.late || 0,
+        earlyLeave: data.earlyLeave || 0
+      });
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setAnalytics({
+        present: 0,
+        absent: 0,
+        onLeave: 0,
+        late: 0,
+        earlyLeave: 0
+      });
+      setIsLoading(false);
+    }
   };
 
   // Modified fetchWeeklyTrend to use selected week
   const fetchWeeklyTrend = async () => {
     try {
       const token = localStorage.getItem('token');
-      const selectedWeekData = weekOptions.find(week => week.value === selectedWeek);
       
-      if (!selectedWeekData) return;
+      // Find the selected week option
+      const selectedWeekOption = weekOptions.find(option => option.value === selectedWeek);
       
-      const startDate = formatISO(selectedWeekData.startDate, { representation: 'date' });
-      const endDate = formatISO(selectedWeekData.endDate, { representation: 'date' });
+      if (!selectedWeekOption) {
+        console.error('Selected week option not found');
+        setWeeklyTrend([0, 0, 0, 0, 0, 0, 0]);
+        return;
+      }
       
-      const res = await axios.get(
-        `${baseURL}api/analytics/weekly-trend?startDate=${startDate}&endDate=${endDate}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // Use the actual date objects from the week options
+      const startDate = format(selectedWeekOption.startDate, 'yyyy-MM-dd');
+      const endDate = format(selectedWeekOption.endDate, 'yyyy-MM-dd');
       
-      if (res.data.success) {
-        setWeeklyTrend(res.data.data || [0, 0, 0, 0, 0, 0, 0]);
+      console.log(`Fetching weekly trend from ${startDate} to ${endDate}`);
+      
+      // Use the weekly endpoint instead of analytics
+      const url = `${baseURL}api/attendance/weekly`;
+      
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      console.log('Weekly trend response:', response.data);
+      
+      if (response.data && response.data.data) {
+        // Scale the values to make them visible on the chart
+        const scaledData = response.data.data.map(value => value * 10);
+        setWeeklyTrend(scaledData);
+      } else {
+        setWeeklyTrend([0, 0, 0, 0, 0, 0, 0]);
       }
     } catch (error) {
       console.error('Error fetching weekly trend:', error);
@@ -132,16 +177,33 @@ const Dashboard = () => {
   }, [selectedWeek, weekOptions]);
 
   const fetchAttendance = async () => {
-    const token = localStorage.getItem('token');
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() - currentPage);
-    const selectedDateStr = targetDate.toISOString().split('T')[0];
-    const res = await axios.get(
-      `${baseURL}api/attendance/date?date=${selectedDateStr}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (res.data.success) {
-      setAttendance(res.data.data);
+    try {
+      const token = localStorage.getItem('token');
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() - currentPage);
+      const selectedDateStr = targetDate.toISOString().split('T')[0];
+      
+      console.log(`Dashboard: Fetching attendance for date: ${selectedDateStr}`);
+      
+      const res = await axios.get(
+        `${baseURL}api/attendance/date?date=${selectedDateStr}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Check if records exist in the response, regardless of success flag
+      if (res.data && res.data.records && res.data.records.length > 0) {
+        console.log(`Dashboard: Received ${res.data.records.length} attendance records`);
+        setAttendance(res.data.records);
+      } else if (res.data && res.data.data && res.data.data.length > 0) {
+        console.log(`Dashboard: Received ${res.data.data.length} attendance records from data property`);
+        setAttendance(res.data.data);
+      } else {
+        console.log('Dashboard: No attendance records found in response', res.data);
+        setAttendance([]);
+      }
+    } catch (error) {
+      console.error('Dashboard: Error fetching attendance:', error);
+      setAttendance([]);
     }
   };
 
@@ -150,21 +212,31 @@ const Dashboard = () => {
   };
 
   const pieData = {
-    labels: ['Present', 'Absent', 'On Leave'],
+    labels: ['Present', 'Absent', 'On Leave', 'Late', 'EarlyLeave'],
     datasets: [
       {
-        data: [analytics.present || 0, analytics.absent || 0, analytics.onLeave || 0],
+        data: [
+          analytics.present || 0, 
+          analytics.absent || 0, 
+          analytics.onLeave || 0,
+          analytics.late || 0,
+          analytics.earlyLeave || 0
+        ],
         backgroundColor: [
           'rgba(16, 185, 129, 0.4)',  // Much lighter green
           'rgba(239, 68, 68, 0.4)',   // Much lighter red
-          'rgba(59, 130, 246, 0.4)'   // Much lighter blue
+          'rgba(59, 130, 246, 0.4)',  // Much lighter blue
+          'rgba(245, 158, 11, 0.4)',  // Much lighter amber
+          'rgba(168, 85, 247, 0.4)'   // Much lighter purple
         ],
         borderWidth: 1,
         borderColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
         hoverBackgroundColor: [
           'rgba(16, 185, 129, 0.6)',  // Slightly darker on hover but still light
           'rgba(239, 68, 68, 0.6)',   // Slightly darker on hover but still light
-          'rgba(59, 130, 246, 0.6)'   // Slightly darker on hover but still light
+          'rgba(59, 130, 246, 0.6)',  // Slightly darker on hover but still light
+          'rgba(245, 158, 11, 0.6)',  // Slightly darker on hover but still light
+          'rgba(168, 85, 247, 0.6)'   // Slightly darker on hover but still light
         ],
         hoverOffset: 3,
       },
@@ -258,7 +330,10 @@ const Dashboard = () => {
     scales: {
       y: {
         beginAtZero: true,
+        min: 0,
+        max: 20,  // Adjusted to show the scaled data better
         ticks: {
+          stepSize: 5,
           color: document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)',
           font: {
             size: 11
@@ -324,7 +399,7 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="space-y-6 relative z-10">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <SummaryCard 
                   label="Present" 
                   value={analytics.present || 0} 
@@ -366,13 +441,26 @@ const Dashboard = () => {
                 />
                 <SummaryCard 
                   label="Late" 
-                  value={analytics.partial || 0} 
+                  value={analytics.late || 0} 
                   color="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/10" 
                   textColor="text-amber-700 dark:text-amber-400" 
                   icon={
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                  }
+                />
+                <SummaryCard 
+                  label="EarlyLeave" 
+                  value={analytics.earlyLeave || 0} 
+                  color="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/10" 
+                  textColor="text-purple-700 dark:text-purple-400" 
+                  icon={
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600 dark:text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="8 12 12 16 16 12"></polyline>
+                      <line x1="12" y1="8" x2="12" y2="16"></line>
                     </svg>
                   }
                 />
@@ -553,41 +641,23 @@ const Dashboard = () => {
                                       {formatTime(record.checkOutTime)}
                                     </span>
                                     {record.isEarly && (
-                                      <span className="ml-2 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full">Early</span>
+                                      <span className="ml-2 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full">EarlyLeave</span>
                                     )}
                                   </div>
-                                ) : '-'}
+                                ) : (
+                                  <span className="text-sm text-gray-500 dark:text-gray-500">-</span>
+                                )}
                               </td>
                               <td className="py-4 px-6">
-                                <span className={`px-3 py-1.5 rounded-full text-xs font-medium inline-flex items-center ${
-                                  record.status === 'absent'
-                                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                                    : record.status === 'onLeave'
-                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                                    : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                <span className={`px-2 py-1 text-xs rounded-full ${
+                                  record.status === 'present' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 
+                                  record.status === 'absent' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 
+                                  record.status === 'onLeave' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 
+                                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                                 }`}>
-                                  {record.status === 'absent' && (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <circle cx="12" cy="12" r="10"></circle>
-                                      <line x1="15" y1="9" x2="9" y2="15"></line>
-                                      <line x1="9" y1="9" x2="15" y2="15"></line>
-                                    </svg>
-                                  )}
-                                  {record.status === 'onLeave' && (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                      <line x1="16" y1="2" x2="16" y2="6"></line>
-                                      <line x1="8" y1="2" x2="8" y2="6"></line>
-                                      <line x1="3" y1="10" x2="21" y2="10"></line>
-                                    </svg>
-                                  )}
-                                  {record.status === 'present' && (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                    </svg>
-                                  )}
-                                  {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                                  {record.status === 'onLeave' ? 'On Leave' : 
+                                   record.status === 'partial' ? 'EarlyLeave' : 
+                                   record.status.charAt(0).toUpperCase() + record.status.slice(1)}
                                 </span>
                               </td>
                             </tr>

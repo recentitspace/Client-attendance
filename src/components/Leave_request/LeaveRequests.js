@@ -34,9 +34,13 @@ const LeaveRequests = () => {
       targetDate.setDate(targetDate.getDate() - currentPage);
       const todayStr = targetDate.toISOString().split('T')[0];
 
+      // Filter requests where the current date falls within the leave period
       const filtered = res.data.filter((req) => {
-        const requestDate = new Date(req.requestDate).toISOString().split('T')[0];
-        return requestDate === todayStr;
+        const startDate = new Date(req.startDate).toISOString().split('T')[0];
+        const endDate = new Date(req.endDate).toISOString().split('T')[0];
+        
+        // Check if today is within the leave period (inclusive of start and end dates)
+        return todayStr >= startDate && todayStr <= endDate;
       });
 
       setRequests(filtered);

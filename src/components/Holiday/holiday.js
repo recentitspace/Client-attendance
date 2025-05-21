@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import DashboardLayout from "../Dashboard/DashboardLayout";
-import { CalendarIcon, PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon, PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { format } from "date-fns";
 
 const baseURL = process.env.REACT_APP_API_BASE;
 
@@ -15,14 +16,44 @@ const HolidayManager = () => {
   const [holidayId, setHolidayId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [filteredHolidays, setFilteredHolidays] = useState({});
 
   const token = localStorage.getItem("token");
+  const theme = localStorage.getItem("theme") || "light";
 
   const axiosConfig = {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   };
+
+  useEffect(() => {
+    fetchHolidays();
+  }, []);
+
+  useEffect(() => {
+    // Filter holidays by current year
+    const filtered = holidays.filter(holiday => {
+      const holidayDate = new Date(holiday.date);
+      return holidayDate.getFullYear() === currentYear;
+    });
+    
+    // Group holidays by month
+    const grouped = filtered.reduce((acc, holiday) => {
+      const month = new Date(holiday.date).getMonth();
+      if (!acc[month]) acc[month] = [];
+      acc[month].push(holiday);
+      return acc;
+    }, {});
+    
+    // Sort holidays within each month
+    Object.keys(grouped).forEach(month => {
+      grouped[month].sort((a, b) => new Date(a.date) - new Date(b.date));
+    });
+    
+    setFilteredHolidays(grouped);
+  }, [holidays, currentYear]);
 
   const fetchHolidays = async () => {
     setLoading(true);
@@ -36,12 +67,20 @@ const HolidayManager = () => {
     }
   };
 
-  useEffect(() => {
-    fetchHolidays();
-  }, []);
-
-  const handleSubmit = async () => {
-    if (!name || !date) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!name || !date) {
+      Swal.fire({
+        title: "Error",
+        text: "Please fill in all required fields",
+        icon: "error",
+        background: theme === "dark" ? "#1f2937" : "#ffffff",
+        color: theme === "dark" ? "#f9fafb" : "#1f2937",
+        confirmButtonColor: "#dc2626",
+      });
+      return;
+    }
 
     try {
       if (holidayId) {
@@ -54,9 +93,11 @@ const HolidayManager = () => {
           title: "Success",
           text: "Holiday updated",
           icon: "success",
-          background: localStorage.getItem("theme") === "dark" ? "#1f2937" : "#ffffff",
-          color: localStorage.getItem("theme") === "dark" ? "#f9fafb" : "#1f2937",
+          background: theme === "dark" ? "#1f2937" : "#ffffff",
+          color: theme === "dark" ? "#f9fafb" : "#1f2937",
           confirmButtonColor: "#3b82f6",
+          timer: 1500,
+          showConfirmButton: false
         });
       } else {
         await axios.post(
@@ -68,9 +109,11 @@ const HolidayManager = () => {
           title: "Success",
           text: "Holiday added",
           icon: "success",
-          background: localStorage.getItem("theme") === "dark" ? "#1f2937" : "#ffffff",
-          color: localStorage.getItem("theme") === "dark" ? "#f9fafb" : "#1f2937",
+          background: theme === "dark" ? "#1f2937" : "#ffffff",
+          color: theme === "dark" ? "#f9fafb" : "#1f2937",
           confirmButtonColor: "#3b82f6",
+          timer: 1500,
+          showConfirmButton: false
         });
       }
 
@@ -87,8 +130,8 @@ const HolidayManager = () => {
         title: "Error",
         text: "Failed to save holiday",
         icon: "error",
-        background: localStorage.getItem("theme") === "dark" ? "#1f2937" : "#ffffff",
-        color: localStorage.getItem("theme") === "dark" ? "#f9fafb" : "#1f2937",
+        background: theme === "dark" ? "#1f2937" : "#ffffff",
+        color: theme === "dark" ? "#f9fafb" : "#1f2937",
         confirmButtonColor: "#dc2626",
       });
     }
@@ -104,8 +147,6 @@ const HolidayManager = () => {
   };
 
   const handleDelete = async (id) => {
-    const theme = localStorage.getItem("theme") || "light";
-
     const confirm = await Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
@@ -131,6 +172,8 @@ const HolidayManager = () => {
           background: theme === "dark" ? "#1f2937" : "#ffffff",
           color: theme === "dark" ? "#f9fafb" : "#1f2937",
           confirmButtonColor: "#6366f1",
+          timer: 1500,
+          showConfirmButton: false
         });
       } catch (err) {
         console.error("Error deleting holiday:", err);
@@ -149,31 +192,40 @@ const HolidayManager = () => {
   const getTypeClass = (type) => {
     switch (type) {
       case 'official': 
-        return 'bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium';
+        return 'bg-primary text-white px-2 py-1 rounded-full text-xs font-medium';
       case 'custom': 
-        return 'bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-medium';
+        return 'bg-purple-500 text-white px-2 py-1 rounded-full text-xs font-medium';
       case 'half-day': 
-        return 'bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-medium';
+        return 'bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-medium';
       default: 
-        return 'bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-medium';
+        return 'bg-gray-500 text-white px-2 py-1 rounded-full text-xs font-medium';
     }
+  };
+
+  const getMonthName = (monthIndex) => {
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    return months[monthIndex];
   };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    return format(date, 'EEE, MMM d, yyyy');
+  };
+
+  const changeYear = (increment) => {
+    setCurrentYear(prev => prev + increment);
   };
 
   return (
     <DashboardLayout>
       <div className="p-6 min-h-screen bg-gray-100 dark:bg-gray-900">
-        <div className="flex items-center justify-between mb-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
           <div className="flex items-center">
-            <div className="bg-blue-500 p-2 rounded-lg mr-3">
+            <div className="bg-primary p-2 rounded-lg mr-3">
               <CalendarIcon className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -182,158 +234,222 @@ const HolidayManager = () => {
             </div>
           </div>
           
-          <button
-            onClick={() => {
-              setShowForm(true);
-              setHolidayId(null);
-              setName("");
-              setDate("");
-              setType("official");
-              setNotes("");
-            }}
-            className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg flex items-center"
-          >
-            <PlusIcon className="h-5 w-5 mr-1" />
-            Add Holiday
-          </button>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm px-3 py-2">
+              <button 
+                onClick={() => changeYear(-1)}
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </button>
+              <span className="mx-3 font-medium text-gray-700 dark:text-gray-300">{currentYear}</span>
+              <button 
+                onClick={() => changeYear(1)}
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+            
+            <button
+              onClick={() => {
+                setShowForm(true);
+                setHolidayId(null);
+                setName("");
+                setDate("");
+                setType("official");
+                setNotes("");
+              }}
+              className="bg-primary hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg flex items-center shadow-sm"
+            >
+              <PlusIcon className="h-5 w-5 mr-1" />
+              Add Holiday
+            </button>
+          </div>
         </div>
 
+        {/* Holiday Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-md">
-              <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-white">
-                {holidayId ? "Edit Holiday" : "Add Holiday"}
-              </h3>
-              <div className="space-y-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-md shadow-xl">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  {holidayId ? "Edit Holiday" : "Add Holiday"}
+                </h3>
+                <button 
+                  onClick={() => setShowForm(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Holiday Name*
+                  </label>
                   <input
                     type="text"
                     placeholder="Holiday Name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
+                
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Date*
+                  </label>
                   <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
+                
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Type
+                  </label>
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="official">Official</option>
                     <option value="custom">Custom</option>
                     <option value="half-day">Half-Day</option>
                   </select>
                 </div>
+                
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Notes (optional)
+                  </label>
                   <textarea
                     placeholder="Notes (optional)"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-              </div>
-              <div className="flex justify-end mt-6 space-x-2">
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
-                >
-                  {holidayId ? "Update" : "Save"}
-                </button>
-              </div>
+                
+                <div className="flex justify-end mt-6 space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-primary hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  >
+                    {holidayId ? "Update" : "Save"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Notes</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {holidays.length > 0 ? (
-                    holidays.map((holiday) => (
-                      <tr 
-                        key={holiday._id} 
-                        className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{holiday.name}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-700 dark:text-gray-300">{formatDate(holiday.date)}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={getTypeClass(holiday.type)}>
-                            {holiday.type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate">{holiday.notes || "—"}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex justify-end space-x-2">
-                            <button
-                              onClick={() => handleEdit(holiday)}
-                              className="text-blue-500 hover:text-blue-700"
-                              title="Edit"
-                            >
-                              <PencilIcon className="h-5 w-5" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(holiday._id);
-                              }}
-                              className="text-red-500 hover:text-red-700"
-                              title="Delete"
-                            >
-                              <TrashIcon className="h-5 w-5" />
-                            </button>
+        {/* Main Content */}
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Object.keys(filteredHolidays).length === 0 ? (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
+                <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
+                  <CalendarIcon className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No holidays found</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">
+                  There are no holidays scheduled for {currentYear}.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowForm(true);
+                    setHolidayId(null);
+                    setName("");
+                    setDate("");
+                    setType("official");
+                    setNotes("");
+                  }}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-blue-600 focus:outline-none"
+                >
+                  <PlusIcon className="h-5 w-5 mr-2" />
+                  Add Your First Holiday
+                </button>
+              </div>
+            ) : (
+              Object.keys(filteredHolidays)
+                .sort((a, b) => parseInt(a) - parseInt(b))
+                .map(month => (
+                  <div key={month} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 bg-gray-50 dark:bg-gray-750 border-b border-gray-200 dark:border-gray-700">
+                      <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+                        {getMonthName(parseInt(month))} {currentYear}
+                      </h2>
+                    </div>
+                    
+                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {filteredHolidays[month].map(holiday => (
+                        <div key={holiday._id} className="px-6 py-4 flex flex-col">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <span className={getTypeClass(holiday.type)}>
+                                {holiday.type}
+                              </span>
+                              <div>
+                                <h3 className="text-gray-800 dark:text-white font-medium">{holiday.name}</h3>
+                                <p className="text-gray-500 dark:text-gray-400">{formatDate(holiday.date)}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleEdit(holiday)}
+                                className="text-blue-500 hover:text-blue-700"
+                                title="Edit"
+                              >
+                                <PencilIcon className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(holiday._id)}
+                                className="text-red-500 hover:text-red-700"
+                                title="Delete"
+                              >
+                                <TrashIcon className="h-5 w-5" />
+                              </button>
+                            </div>
                           </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
-                        No holidays found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                          
+                          {holiday.notes && (
+                            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 pl-12 pr-4">
+                              <p className="whitespace-normal break-words leading-tight max-w-full overflow-hidden text-xs" style={{ maxWidth: '80%' }}>
+                                {holiday.notes}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+            )}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

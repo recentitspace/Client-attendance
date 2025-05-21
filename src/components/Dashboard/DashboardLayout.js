@@ -42,11 +42,11 @@ const DashboardLayout = ({ children }) => {
         {/* Logo */}
         <div className="p-6 border-b dark:border-gray-700">
           <div className="flex items-center">
-            <div className="h-8 w-8 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg mr-3">
+            <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center text-white font-bold text-lg mr-3">
               A
             </div>
             <h1 className="font-bold text-xl">
-              <span className="text-blue-600">Atten</span>
+              <span className="text-primary">Atten</span>
               <span className="dark:text-white">do</span>
             </h1>
           </div>
@@ -62,7 +62,7 @@ const DashboardLayout = ({ children }) => {
                 className={({ isActive }) =>
                   `flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 group ${
                     isActive
-                      ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium'
+                      ? 'bg-primary/10 text-primary dark:bg-primary/30 dark:text-primary font-medium'
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
                   }`
                 }
@@ -70,7 +70,7 @@ const DashboardLayout = ({ children }) => {
                 <item.icon className={`h-5 w-5 mr-3 transition-colors duration-200`} />
                 <span>{item.label}</span>
                 {item.to === '/dashboard' && (
-                  <span className="ml-auto bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400 text-xs font-medium px-2 py-0.5 rounded-full">
+                  <span className="ml-auto bg-primary/10 text-primary dark:bg-primary/30 dark:text-primary text-xs font-medium px-2 py-0.5 rounded-full">
                     New
                   </span>
                 )}

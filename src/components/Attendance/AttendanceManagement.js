@@ -6,7 +6,17 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ArrowDownTrayIcon } from '@heroicons/react/20/solid';
+import { 
+  ChevronDownIcon, 
+  ChevronLeftIcon, 
+  ChevronRightIcon, 
+  ArrowDownTrayIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ClockIcon,
+  CalendarDaysIcon,
+  ExclamationCircleIcon
+} from '@heroicons/react/20/solid';
 import { UserGroupIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { ThemeContext } from '../Context/ThemeContext';
 const baseURL = process.env.REACT_APP_API_BASE;
@@ -27,7 +37,11 @@ const AttendanceManagement = () => {
     const token = localStorage.getItem('token');
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() - currentPage);
+    
+    // Format date as YYYY-MM-DD
     const selectedDateStr = targetDate.toISOString().split('T')[0];
+    
+    console.log(`Fetching attendance for date: ${selectedDateStr}`);
 
     try {
       const response = await axios.get(
@@ -35,12 +49,22 @@ const AttendanceManagement = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (response.data.success) {
+      // Check if records exist in the response, regardless of success flag
+      if (response.data && response.data.records && response.data.records.length > 0) {
+        console.log(`Received ${response.data.records.length} attendance records`);
+        setAttendance(response.data.records);
+      } else if (response.data && response.data.data && response.data.data.length > 0) {
+        console.log(`Received ${response.data.data.length} attendance records from data property`);
         setAttendance(response.data.data);
+      } else {
+        console.log('No attendance records found in response', response.data);
+        setAttendance([]);
       }
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch attendance:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      setAttendance([]);
       setLoading(false);
     }
   };
@@ -100,6 +124,7 @@ const AttendanceManagement = () => {
       case 'absent': 
         return 'bg-red-500 text-white dark:bg-red-600 dark:text-white border-0 px-3 py-1 rounded-full text-xs font-medium shadow-sm';
       case 'partial': 
+      case 'leftEarly': 
         return 'bg-yellow-500 text-white dark:bg-yellow-600 dark:text-white border-0 px-3 py-1 rounded-full text-xs font-medium shadow-sm';
       default: 
         return 'bg-gray-500 text-white dark:bg-gray-600 dark:text-white border-0 px-3 py-1 rounded-full text-xs font-medium shadow-sm';
@@ -116,7 +141,7 @@ const AttendanceManagement = () => {
 
   const exportToPDF = () => {
     const doc = new jsPDF();
-    const columns = ["Employee", "Check-In", "Check-Out", "Late", "Early Leave", "Hours Worked", "Extra", "Status"];
+    const columns = ["Employee", "Check-In", "Check-Out", "Late", "EarlyLeave", "Hours Worked", "Extra", "Status"];
     const rows = attendance.map(record => {
       const emp = getEmployee(record);
       return [
@@ -159,7 +184,7 @@ const AttendanceManagement = () => {
         checkIn: formatTime(record.checkInTime),
         checkOut: formatTime(record.checkOutTime),
         late: record.isLate ? 'Yes' : 'No',
-        early: record.isEarly ? 'Yes' : 'No',
+        earlyLeave: record.isEarly ? 'Yes' : 'No',
         hours: calculateHours(record.checkInTime, record.checkOutTime),
         extra: record.extraHours || '-',
         status: record.status,
@@ -177,7 +202,7 @@ const AttendanceManagement = () => {
         <div className="mb-6 flex justify-between items-start">
           <div>
             <div className="flex items-center space-x-3">
-              <div className="bg-blue-600 p-2 rounded-lg">
+              <div className="bg-primary p-2 rounded-lg">
                 <UserGroupIcon className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -188,7 +213,7 @@ const AttendanceManagement = () => {
             
             {/* Date display below the title */}
             <div className="mt-3 flex items-center text-gray-700 dark:text-gray-300">
-              <CalendarIcon className="h-5 w-5 mr-2 text-blue-500 dark:text-blue-400" />
+              <CalendarIcon className="h-5 w-5 mr-2 text-primary dark:text-primary" />
               <span className="text-lg font-medium">
                 {format(new Date(getPaginatedDate()), 'EEEE, MMMM d, yyyy')}
               </span>
@@ -199,7 +224,7 @@ const AttendanceManagement = () => {
             <div className="relative">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                className="flex items-center space-x-2 bg-primary hover:bg-primary text-white px-4 py-2 rounded-lg transition-colors"
               >
                 <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
                 <span>Export</span>
@@ -369,7 +394,10 @@ const AttendanceManagement = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span className={getStatusClass(record.status)}>
-                            {record.status}
+                            {record.status === 'onLeave' ? 'On Leave' : 
+                             record.status === 'partial' ? 'EarlyLeave' : 
+                             record.status === 'leftEarly' ? 'EarlyLeave' : 
+                             record.status.charAt(0).toUpperCase() + record.status.slice(1)}
                           </span>
                         </td>
                       </tr>

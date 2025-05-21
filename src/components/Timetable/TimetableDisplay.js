@@ -228,30 +228,95 @@ const TimetableDetails = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0 h-10 w-10 rounded-md bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                      <ClockIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  {/* Single Shift Check-In Time */}
+                  {timetable.shiftType === "single" && (
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-md bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                        <ClockIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">Check-In Time</h3>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          {formatTimeToAMPM(timetable.checkInStart)} - {formatTimeToAMPM(timetable.checkInEnd)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-4">
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">Check-In Time</h3>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        {formatTimeToAMPM(timetable.checkInStart)} - {formatTimeToAMPM(timetable.checkInEnd)}
-                      </p>
-                    </div>
-                  </div>
+                  )}
 
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0 h-10 w-10 rounded-md bg-red-100 dark:bg-red-900 flex items-center justify-center">
-                      <ClockIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
+                  {/* Single Shift Check-Out Time */}
+                  {timetable.shiftType === "single" && (
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-md bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                        <ClockIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">Check-Out Time</h3>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          {formatTimeToAMPM(timetable.checkOutStart)} - {formatTimeToAMPM(timetable.checkOutEnd)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-4">
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">Check-Out Time</h3>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        {formatTimeToAMPM(timetable.checkOutStart)} - {formatTimeToAMPM(timetable.checkOutEnd)}
-                      </p>
-                    </div>
-                  </div>
+                  )}
 
+                  {/* Split Shift - First Shift */}
+                  {timetable.shiftType === "split" && (
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-md bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                        <ClockIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">First Shift</h3>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          In: {formatTimeToAMPM(timetable.checkInStart)} - {formatTimeToAMPM(timetable.checkInEnd)}
+                          <br />
+                          Out: {formatTimeToAMPM(timetable.checkOutStart)} - {formatTimeToAMPM(timetable.checkOutEnd)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Split Shift - Second Shift */}
+                  {timetable.shiftType === "split" && (
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-md bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                        <ClockIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">Second Shift</h3>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          In: {formatTimeToAMPM(timetable.shift2CheckInStart)} - {formatTimeToAMPM(timetable.shift2CheckInEnd)}
+                          <br />
+                          Out: {formatTimeToAMPM(timetable.shift2CheckOutStart)} - {formatTimeToAMPM(timetable.shift2CheckOutEnd)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Weekly Schedule */}
+                  {timetable.shiftType === "weekly" && timetable.weeklySchedule && (
+                    <div className="flex items-start col-span-2">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-md bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                        <CalendarIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="ml-4 w-full">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">Weekly Schedule</h3>
+                        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {timetable.workingDays && timetable.workingDays.map(day => (
+                            timetable.weeklySchedule[day] && (
+                              <div key={day} className="flex justify-between text-sm text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1">
+                                <span className="font-medium">{day}:</span>
+                                <span>
+                                  {formatTimeToAMPM(timetable.weeklySchedule[day].checkIn)} - {formatTimeToAMPM(timetable.weeklySchedule[day].checkOut)}
+                                </span>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Allowances - Show for all types */}
                   <div className="flex items-start">
                     <div className="flex-shrink-0 h-10 w-10 rounded-md bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
                       <svg className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -260,12 +325,22 @@ const TimetableDetails = () => {
                     </div>
                     <div className="ml-4">
                       <h3 className="text-sm font-medium text-gray-900 dark:text-white">Allowances</h3>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Late: {timetable.lateAllowance || 0} min | Early Leave: {timetable.earlyLeaveAllowance || 0} min
-                      </p>
+                      {timetable.shiftType === "split" ? (
+                        <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          <p>First Shift:</p>
+                          <p>Late: {timetable.lateAllowance || 0} min | Early Leave: {timetable.earlyLeaveAllowance || 0} min</p>
+                          <p className="mt-1">Second Shift:</p>
+                          <p>Late: {timetable.shift2LateAllowance || 0} min | Early Leave: {timetable.shift2EarlyLeaveAllowance || 0} min</p>
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          Late: {timetable.lateAllowance || 0} min | Early Leave: {timetable.earlyLeaveAllowance || 0} min
+                        </p>
+                      )}
                     </div>
                   </div>
 
+                  {/* Assigned Employees - Show for all types */}
                   <div className="flex items-start">
                     <div className="flex-shrink-0 h-10 w-10 rounded-md bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
                       <UserCircleIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -343,7 +418,7 @@ const TimetableDetails = () => {
                                   {employee.username}
                                 </div>
                                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                                  {employee.email || "No email"}
+                                  {employee.telephone || "No phone number"}
                                 </div>
                               </div>
                             </div>
@@ -367,10 +442,12 @@ const TimetableDetails = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               employee.status === "active" 
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                                : employee.status === "inactive"
+                                ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+                                : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
                             }`}>
-                              {employee.status || "Not assigned"}
+                              {employee.status ? employee.status.charAt(0).toUpperCase() + employee.status.slice(1) : "Not set"}
                             </span>
                           </td>
                         </tr>

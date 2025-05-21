@@ -5,6 +5,7 @@ import TimetableForm from './TimeTableForm';
 import moment from 'moment-timezone';
 import { PencilSquareIcon, TrashIcon, ClockIcon, CalendarIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from "react-router-dom";
+import Swal from 'sweetalert2';
 const baseURL = process.env.REACT_APP_API_BASE;
 
 const TimeTableApp = () => {
@@ -55,40 +56,139 @@ const TimeTableApp = () => {
       await axios.post(`${baseURL}api/time-tables/create`, timetableData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setSuccessMessage('Timetable added successfully!');
+      
+      // Replace success message with SweetAlert2
+      const theme = localStorage.getItem('theme') || 'light';
+      Swal.fire({
+        title: 'Success!',
+        text: 'Timetable added successfully!',
+        icon: 'success',
+        confirmButtonColor: '#209ACF', // primary color
+        background: theme === 'dark' ? '#1f2937' : '#ffffff',
+        color: theme === 'dark' ? '#f9fafb' : '#1f2937',
+        borderRadius: '0.5rem',
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false
+      });
+      
       fetchTimetables();
       setShowForm(false);
     } catch (error) {
       console.error('Error adding timetable:', error);
+      
+      const theme = localStorage.getItem('theme') || 'light';
+      Swal.fire({
+        title: 'Error!',
+        text: 'Failed to add the timetable.',
+        icon: 'error',
+        confirmButtonColor: '#e11d48',
+        background: theme === 'dark' ? '#1f2937' : '#ffffff',
+        color: theme === 'dark' ? '#f9fafb' : '#1f2937',
+        borderRadius: '0.5rem',
+      });
     }
   };
 
-  const handleUpdateTimetable = async (id, timetableData) => {
+  const handleUpdateTimetable = async (timetableData) => {
     try {
       const token = localStorage.getItem('token');
+      const id = timetableData._id; // Extract ID from the timetable data
+      
+      console.log("Updating timetable with ID:", id);
+      console.log("Updating timetable with URL:", `${baseURL}api/time-tables/update/${id}`);
+      console.log("Update data:", timetableData);
+      
+      // Fix the API endpoint and ensure we have a valid ID
+      if (!id) {
+        throw new Error("Missing timetable ID");
+      }
+      
       await axios.put(`${baseURL}api/time-tables/update/${id}`, timetableData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setSuccessMessage('Timetable updated successfully!');
+      
+      // Replace success message with SweetAlert2
+      const theme = localStorage.getItem('theme') || 'light';
+      Swal.fire({
+        title: 'Success!',
+        text: 'Timetable updated successfully!',
+        icon: 'success',
+        confirmButtonColor: '#209ACF', // primary color
+        background: theme === 'dark' ? '#1f2937' : '#ffffff',
+        color: theme === 'dark' ? '#f9fafb' : '#1f2937',
+        borderRadius: '0.5rem',
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false
+      });
+      
       fetchTimetables();
       setShowForm(false);
       setSelectedTimetable(null);
     } catch (error) {
       console.error('Error updating timetable:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      
+      const theme = localStorage.getItem('theme') || 'light';
+      Swal.fire({
+        title: 'Error!',
+        text: 'Failed to update the timetable.',
+        icon: 'error',
+        confirmButtonColor: '#e11d48',
+        background: theme === 'dark' ? '#1f2937' : '#ffffff',
+        color: theme === 'dark' ? '#f9fafb' : '#1f2937',
+        borderRadius: '0.5rem',
+      });
     }
   };
 
   const handleDeleteClick = async (id) => {
-    if (window.confirm('Are you sure you want to delete this timetable?')) {
+    const theme = localStorage.getItem('theme') || 'light';
+    
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626', // red
+      cancelButtonColor: '#3b82f6',  // blue
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel',
+      background: theme === 'dark' ? '#1f2937' : '#ffffff',
+      color: theme === 'dark' ? '#f9fafb' : '#1f2937',
+      borderRadius: '0.5rem',
+    });
+
+    if (result.isConfirmed) {
       try {
         const token = localStorage.getItem('token');
         await axios.delete(`${baseURL}api/time-tables/delete/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setSuccessMessage('Timetable deleted successfully!');
+        
+        Swal.fire({
+          title: 'Deleted!',
+          text: 'Timetable deleted successfully!',
+          icon: 'success',
+          confirmButtonColor: '#6366f1', // indigo
+          background: theme === 'dark' ? '#1f2937' : '#ffffff',
+          color: theme === 'dark' ? '#f9fafb' : '#1f2937',
+          borderRadius: '0.5rem',
+        });
+        
         fetchTimetables();
       } catch (error) {
         console.error('Error deleting timetable:', error);
+        Swal.fire({
+          title: 'Error!',
+          text: 'Failed to delete the timetable.',
+          icon: 'error',
+          confirmButtonColor: '#e11d48',
+          background: theme === 'dark' ? '#1f2937' : '#ffffff',
+          color: theme === 'dark' ? '#f9fafb' : '#1f2937',
+          borderRadius: '0.5rem',
+        });
       }
     }
   };
