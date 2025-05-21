@@ -3,25 +3,30 @@ import axios from 'axios';
 import DashboardLayout from '../Dashboard/DashboardLayout';
 import TimetableForm from './TimeTableForm';
 import moment from 'moment-timezone';
-import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { PencilSquareIcon, TrashIcon, ClockIcon, CalendarIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from "react-router-dom";
 const baseURL = process.env.REACT_APP_API_BASE;
 
-const TimetableApp = () => {
-  const [showForm, setShowForm] = useState(false);
-  const [filteredTimetables, setFilteredTimetables] = useState([]);
+const TimeTableApp = () => {
   const [timetables, setTimetables] = useState([]);
+  const [showForm, setShowForm] = useState(false);
   const [selectedTimetable, setSelectedTimetable] = useState(null);
-  const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [timetableToDelete, setTimetableToDelete] = useState(null);
-
+  const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchTimetables();
   }, []);
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   const fetchTimetables = async () => {
     try {
@@ -44,176 +49,271 @@ const TimetableApp = () => {
     return moment().set({ hour, minute }).format("hh:mm A");
   };
 
-  const handleAddTimetable = async (newTimetable) => {
+  const handleAddTimetable = async (timetableData) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${baseURL}api/time-tables/create`, newTimetable, {
+      await axios.post(`${baseURL}api/time-tables/create`, timetableData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setTimetables([...timetables, response.data]);
-      setSuccessMessage('Timetable created successfully!');
+      setSuccessMessage('Timetable added successfully!');
+      fetchTimetables();
       setShowForm(false);
-      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      console.error('Error creating timetable:', error);
+      console.error('Error adding timetable:', error);
     }
   };
 
-  const handleUpdateTimetable = async (updatedTimetable) => {
+  const handleUpdateTimetable = async (id, timetableData) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${baseURL}api/time-tables/update/${updatedTimetable._id}`,
-        updatedTimetable,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const updatedList = timetables.map((tt) =>
-        tt._id === updatedTimetable._id ? response.data : tt
-      );
-      setTimetables(updatedList);
+      await axios.put(`${baseURL}api/time-tables/update/${id}`, timetableData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setSuccessMessage('Timetable updated successfully!');
-      setSelectedTimetable(null);
+      fetchTimetables();
       setShowForm(false);
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setSelectedTimetable(null);
     } catch (error) {
       console.error('Error updating timetable:', error);
     }
   };
 
-  const handleDeleteClick = (id) => {
-    setTimetableToDelete(id);
-    setShowDeleteModal(true);
-  };
-
-  const handleDeleteTimetable = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${baseURL}api/time-tables/delete/${timetableToDelete}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setTimetables(timetables.filter((t) => t._id !== timetableToDelete));
-      setShowDeleteModal(false);
-      setTimetableToDelete(null);
-      setSuccessMessage("Timetable deleted successfully.");
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (error) {
-      console.error("Error deleting timetable:", error);
+  const handleDeleteClick = async (id) => {
+    if (window.confirm('Are you sure you want to delete this timetable?')) {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.delete(`${baseURL}api/time-tables/delete/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setSuccessMessage('Timetable deleted successfully!');
+        fetchTimetables();
+      } catch (error) {
+        console.error('Error deleting timetable:', error);
+      }
     }
   };
 
-  useEffect(() => {
-    const filtered = timetables.filter(tt =>
-      tt.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredTimetables(filtered);
-  }, [searchTerm, timetables]);
-  
+  const filteredTimetables = timetables.filter((timetable) =>
+    timetable.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getWorkingDaysString = (days) => {
+    if (!days || days.length === 0) return "No days set";
+    
+    // Map of abbreviated day names
+    const dayMap = {
+      monday: "Mon",
+      tuesday: "Tue",
+      wednesday: "Wed",
+      thursday: "Thu",
+      friday: "Fri",
+      saturday: "Sat",
+      sunday: "Sun"
+    };
+    
+    // Convert to abbreviated format
+    const abbreviatedDays = days.map(day => dayMap[day.toLowerCase()] || day);
+    
+    // If all weekdays are selected
+    const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+    const hasAllWeekdays = weekdays.every(day => abbreviatedDays.includes(day));
+    
+    // If all weekend days are selected
+    const weekend = ["Sat", "Sun"];
+    const hasAllWeekend = weekend.every(day => abbreviatedDays.includes(day));
+    
+    if (hasAllWeekdays && hasAllWeekend) {
+      return "All days";
+    } else if (hasAllWeekdays) {
+      return "Weekdays";
+    } else if (hasAllWeekend) {
+      return "Weekends";
+    } else if (abbreviatedDays.length > 3) {
+      return `${abbreviatedDays.length} days`;
+    } else {
+      return abbreviatedDays.join(", ");
+    }
+  };
 
   return (
     <DashboardLayout>
-      <div className="p-6 bg-gray-100 dark:bg-gray-900 min-h-screen text-gray-900 dark:text-gray-100">
-        <div className="flex justify-between items-center mb-4">
-          <input
-            type="text"
-            placeholder="Search for timetable..."
-            className="border px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Timetable Management</h1>
+          <p className="text-gray-600 dark:text-gray-400">Create and manage employee work schedules</p>
+        </div>
 
-          {showForm && (
-            <TimetableForm
-              onAddTimetable={handleAddTimetable}
-              onUpdateTimetable={handleUpdateTimetable}
-              existingTimetable={selectedTimetable}
-              onClose={() => {
-                setShowForm(false);
-                setSelectedTimetable(null);
-              }}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div className="relative w-full md:w-64">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search timetables..."
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800 dark:text-white"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-          )}
+          </div>
 
-          <div className="flex space-x-4">
+          <button
+            className="w-full md:w-auto bg-primary hover:bg-blue-600 text-white py-2 px-4 rounded-lg shadow-sm transition duration-150 ease-in-out flex items-center justify-center"
+            onClick={() => {
+              setSelectedTimetable(null);
+              setShowForm(true);
+            }}
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Add Timetable
+          </button>
+        </div>
+
+        {successMessage && (
+          <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded shadow-sm animate-fade-in-down">
+            <div className="flex items-center">
+              <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              <p>{successMessage}</p>
+            </div>
+          </div>
+        )}
+
+        {showForm && (
+          <TimetableForm
+            onAddTimetable={handleAddTimetable}
+            onUpdateTimetable={handleUpdateTimetable}
+            existingTimetable={selectedTimetable}
+            onClose={() => {
+              setShowForm(false);
+              setSelectedTimetable(null);
+            }}
+          />
+        )}
+
+        {filteredTimetables.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 text-center">
+            <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+              <CalendarIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">No timetables found</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">Create your first timetable to get started</p>
             <button
-              className="bg-[#209ACF] text-white py-2 px-5 rounded-lg hover:bg-[#209ACF] shadow-md"
               onClick={() => {
                 setSelectedTimetable(null);
                 setShowForm(true);
               }}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
-              + Add Timetable
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              Create Timetable
             </button>
-          
           </div>
-        </div>
-
-        {successMessage && (
-          <div className="bg-green-500 text-white py-2 px-4 rounded mb-4">
-            {successMessage}
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredTimetables.map((timetable) => (
+              <div
+                key={timetable._id}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition duration-150 ease-in-out"
+              >
+                <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">{timetable.name}</h3>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTimetable(timetable);
+                        setShowForm(true);
+                      }}
+                      className="text-gray-500 hover:text-primary transition-colors"
+                      title="Edit"
+                    >
+                      <PencilSquareIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(timetable._id);
+                      }}
+                      className="text-gray-500 hover:text-red-600 transition-colors"
+                      title="Delete"
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="p-5 cursor-pointer" onClick={() => navigate(`/timetables/${timetable._id}`)}>
+                  <div className="space-y-3">
+                    {timetable.shiftType === "weekly" ? (
+                      <>
+                        <div className="flex items-start">
+                          <CalendarIcon className="w-5 h-5 text-gray-400 mt-0.5 mr-3 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Working Days</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{getWorkingDaysString(timetable.workingDays)}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start">
+                          <ClockIcon className="w-5 h-5 text-gray-400 mt-0.5 mr-3 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Schedule</p>
+                            {timetable.workingDays && timetable.workingDays.length > 0 && timetable.weeklySchedule ? (
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {formatTimeToAMPM(timetable.weeklySchedule[timetable.workingDays[0]]?.checkIn)} - {formatTimeToAMPM(timetable.weeklySchedule[timetable.workingDays[0]]?.checkOut)}
+                              </p>
+                            ) : (
+                              <p className="text-sm text-gray-500 dark:text-gray-400">No schedule set</p>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-start">
+                        <ClockIcon className="w-5 h-5 text-gray-400 mt-0.5 mr-3 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Shift Type</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{timetable.shiftType || "Not specified"}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-start">
+                      <UsersIcon className="w-5 h-5 text-gray-400 mt-0.5 mr-3 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Created By</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{timetable.adminName || "Unknown"}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/timetables/${timetable._id}`);
+                      }}
+                      className="w-full text-center text-sm font-medium text-primary hover:text-blue-600 transition-colors"
+                    >
+                      View Employees →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-          {filteredTimetables.map((timetable, index) => (
-            <div
-              key={index}
-              onClick={() => navigate(`/timetables/${timetable._id}`)}
-              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition duration-300 relative cursor-pointer"
-            >
-              <h3 className="text-xl font-bold mb-3 text-gray-800 dark:text-white">{timetable.name}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-300">
-                Check-In: {formatTimeToAMPM(timetable.checkInStart)} - {formatTimeToAMPM(timetable.checkInEnd)}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-300">
-                Check-Out: {formatTimeToAMPM(timetable.checkOutStart)} - {formatTimeToAMPM(timetable.checkOutEnd)}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-300">Created By: {timetable.adminName || 'Unknown'}</p>
-
-              <div
-                className="absolute top-2 right-2 flex gap-2"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <PencilSquareIcon
-                  className="w-5 h-5 text-[#209ACF] hover:text-[#209ACF] cursor-pointer"
-                  onClick={() => {
-                    setSelectedTimetable(timetable);
-                    setShowForm(true);
-                  }}
-                />
-                <TrashIcon
-                  className="w-5 h-5 text-red-600 hover:text-red-800 cursor-pointer"
-                  onClick={() => handleDeleteClick(timetable._id)}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
-
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-lg p-6 w-full max-w-sm">
-            <h2 className="text-xl font-bold mb-2">Confirm Delete</h2>
-            <p className="mb-4">Are you sure you want to delete this timetable?</p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600"
-              >
-                No
-              </button>
-              <button
-                onClick={handleDeleteTimetable}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                Yes, Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </DashboardLayout>
   );
 };
 
-export default TimetableApp;
+export default TimeTableApp;

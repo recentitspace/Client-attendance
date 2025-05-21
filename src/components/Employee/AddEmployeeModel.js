@@ -77,20 +77,20 @@ const AddEmployeeModal = ({ onClose, onAdd }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-lg w-full max-w-md relative">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Add Employee</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md relative animate-fade-in-down">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white border-b pb-3 dark:border-gray-700">Add Employee</h2>
 
         {/* Loading */}
         {loading && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white py-1 px-4 rounded-full text-sm">
+          <div className="absolute top-4 right-4 bg-blue-500 text-white py-1 px-4 rounded-full text-sm">
             Adding employee...
           </div>
         )}
 
         {/* Success Message */}
         {successMessage && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white py-1 px-4 rounded-full text-sm">
+          <div className="absolute top-4 right-4 bg-green-500 text-white py-1 px-4 rounded-full text-sm">
             {successMessage}
           </div>
         )}
@@ -158,19 +158,17 @@ const AddEmployeeModal = ({ onClose, onAdd }) => {
             </div>
           </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end mt-6">
+          {/* Improved buttons at the bottom */}
+          <div className="mt-8 flex justify-end space-x-3">
             <button
-              type="button"
-              className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg mr-2"
               onClick={onClose}
+              className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
             >
               Cancel
             </button>
             <button
-              type="submit"
-              className="bg-[#209ACF] hover:bg-[#209ACF] text-white py-2 px-6 rounded-lg"
-              disabled={loading}
+              onClick={handleSubmit}
+              className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg shadow-md transition-all duration-200 font-medium"
             >
               Add
             </button>

@@ -14,33 +14,40 @@ import QRGenerator from './components/Qr_code/QrCode';
 import TimeTableApp from './components/Timetable/TimeTableManagement';
 import WifiConfig from './components/SSID/Ssid';
 import TimetableForm from './components/Timetable/TimeTableForm'; 
-import { ThemeProvider } from "@material-tailwind/react";
+import { ThemeProvider as MaterialTailwindProvider } from "@material-tailwind/react";
 import TimetableDetails from './components/Timetable/TimetableDisplay';
 import ConfigManager from './components/ConfigManager';
+import HolidayManager from './components/Holiday/holiday';
+import { ThemeProvider } from './components/Context/ThemeContext';
+import ProfilePage from './components/Profile/ProfilePage';
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100">
-       <ThemeProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/" element={<Navigate to="/dashboard" />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/employees" element={<EmployeeManagement />} />
-          <Route path="/attendance" element={<AttendanceManagement />} />
-          <Route path="/leave-requests" element={<LeaveRequests />} />
-          <Route path="/timetable" element={<TimeTableApp />} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/qrcode" element={<QRGenerator />} />
-          <Route path="/config" element={<ConfigManager />} />
-          <Route path="/form" element={<TimetableForm />} />
-          <Route path="/announcements" element={<AdminAnnouncementsPage />} />
-          <Route path="/timetables/:id" element={<TimetableDetails />} />
-
-        </Routes>
-      </Router>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 dark:text-white">
+      <ThemeProvider>
+        <MaterialTailwindProvider>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/" element={<Navigate to="/dashboard" />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/employees" element={<EmployeeManagement />} />
+              <Route path="/attendance" element={<AttendanceManagement />} />
+              <Route path="/leave-requests" element={<LeaveRequests />} />
+              <Route path="/timetable" element={<TimeTableApp />} />
+              <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/qrcode" element={<QRGenerator />} />
+              <Route path="/config" element={<ConfigManager />} />
+              <Route path="/form" element={<TimetableForm />} />
+              <Route path="/announcements" element={<AdminAnnouncementsPage />} />
+              <Route path="/timetables/:id" element={<TimetableDetails />} />
+              <Route path="/holiday" element={<HolidayManager />} />
+            </Routes>
+          </Router>
+        </MaterialTailwindProvider>
       </ThemeProvider>
     </div>
   );

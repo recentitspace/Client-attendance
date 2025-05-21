@@ -92,9 +92,9 @@ const EditEmployeeModal = ({ employee, onClose, onUpdate }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md relative animate-fade-in-down">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white border-b pb-3 dark:border-gray-700">
           Edit Employee
         </h2>
 
@@ -151,7 +151,7 @@ const EditEmployeeModal = ({ employee, onClose, onUpdate }) => {
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Timetable
               </label>
               <select
@@ -159,7 +159,7 @@ const EditEmployeeModal = ({ employee, onClose, onUpdate }) => {
                 value={employeeData.timetable}
                 onChange={handleInputChange}
                 required
-                className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-sm"
               >
                 <option value="">Select Timetable</option>
                 {timetables.map((tt) => (
@@ -171,29 +171,29 @@ const EditEmployeeModal = ({ employee, onClose, onUpdate }) => {
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Employee Image
               </label>
               <input
                 type="file"
                 name="image"
                 onChange={handleFileChange}
-                className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-sm"
               />
             </div>
           </div>
 
-          <div className="flex justify-end mt-6 space-x-2">
+          <div className="mt-8 flex justify-end space-x-3">
             <button
               type="button"
               onClick={onClose}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+              className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-[#209ACF] hover:bg-[#209ACF] text-white px-4 py-2 rounded-lg"
+              className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg shadow-md transition-all duration-200 font-medium"
             >
               Update
             </button>
@@ -207,7 +207,7 @@ const EditEmployeeModal = ({ employee, onClose, onUpdate }) => {
 // Input Field Component
 const InputField = ({ label, name, value, onChange, required = false }) => (
   <div>
-    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
       {label}
     </label>
     <input
@@ -216,7 +216,7 @@ const InputField = ({ label, name, value, onChange, required = false }) => (
       value={value}
       onChange={onChange}
       required={required}
-      className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
+      className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-sm"
     />
   </div>
 );

@@ -1,14 +1,17 @@
 import React, { createContext, useState, useEffect } from "react";
 
-// ✅ Create the Theme Context
-export const ThemeContext = createContext();
+// Create the Theme Context
+export const ThemeContext = createContext({
+  darkMode: false,
+  setDarkMode: () => {}
+});
 
 export const ThemeProvider = ({ children }) => {
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("theme") === "dark"
   );
 
-  // ✅ Apply dark/light mode on mount
+  // Apply dark/light mode on mount and when changed
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
@@ -19,8 +22,13 @@ export const ThemeProvider = ({ children }) => {
     }
   }, [darkMode]);
 
+  const contextValue = {
+    darkMode,
+    setDarkMode
+  };
+
   return (
-    <ThemeContext.Provider value={{ darkMode, setDarkMode }}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );
