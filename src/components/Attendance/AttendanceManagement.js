@@ -379,7 +379,7 @@ const AttendanceManagement = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {record.checkOutTime ? (record.isEarly ? 'Yes' : 'No') : '-'}
+                            {record.checkOutTime ? (record.earlyLeave ? 'Yes' : 'No') : '-'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
