@@ -363,7 +363,7 @@ const AttendanceManagement = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {record.checkOutTime ? (
                             <div className="flex items-center">
-                              <span className={`w-2 h-2 rounded-full mr-2 ${record.isEarly ? 'bg-amber-500' : 'bg-green-500'}`}></span>
+                              <span className={`w-2 h-2 rounded-full mr-2 ${record.earlyLeave ? 'bg-amber-500' : 'bg-green-500'}`}></span>
                               <span className={`text-sm ${record.isEarly ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-gray-700 dark:text-gray-300'}`}>
                                 {formatTime(record.checkOutTime)}
                               </span>
