@@ -31,7 +31,7 @@ function App() {
               <Route path="/login" element={<SignIn />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/" element={<Navigate to="/dashboard" />} />
+              <Route path="/" element={localStorage.getItem("token")? <Navigate to="/dashboard" />: <Navigate to="/login" />}/>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/employees" element={<EmployeeManagement />} />
